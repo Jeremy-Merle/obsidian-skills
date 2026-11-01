@@ -1,19 +1,29 @@
 ---
 name: obsidian-markdown
-description: Create and edit Obsidian Flavored Markdown with wikilinks, embeds, callouts, properties, and other Obsidian-specific syntax. Use when working with .md files in Obsidian, or when the user mentions wikilinks, callouts, frontmatter, tags, embeds, or Obsidian notes.
+description: Create and edit Obsidian Flavored Markdown when the target is an Obsidian vault or the user explicitly requests Obsidian-specific syntax such as wikilinks, embeds, callouts, or note properties. Do not use for ordinary Markdown files or merely because a file has frontmatter or tags.
 ---
 
 # Obsidian Flavored Markdown Skill
 
 Create and edit valid Obsidian Flavored Markdown. Obsidian extends CommonMark and GFM with wikilinks, embeds, callouts, properties, comments, and other syntax. This skill covers only Obsidian-specific extensions -- standard Markdown (headings, bold, italic, lists, quotes, code blocks, tables) is assumed knowledge.
 
+## Scope
+
+Use this skill only when the context clearly establishes an Obsidian target:
+
+- The file is inside an Obsidian vault, normally identifiable by an ancestor `.obsidian/` directory.
+- The user explicitly identifies the file, folder, or task as Obsidian-related.
+- The user explicitly requests Obsidian-specific syntax or behavior.
+
+A `.md` extension, generic frontmatter, tags, or a request to edit Markdown is not sufficient. For ordinary Markdown, follow the repository's existing documentation conventions and standard CommonMark or GFM. Do not introduce Obsidian-only features such as wikilinks, embeds, callouts, `==highlight==`, or `%%comments%%` unless the user asks for them or the target is clearly an Obsidian vault.
+
 ## Workflow: Creating an Obsidian Note
 
-1. **Add frontmatter** with properties (title, tags, aliases) at the top of the file. See [PROPERTIES.md](references/PROPERTIES.md) for all property types.
+1. **Add frontmatter** only when properties are useful or expected for the note. Use the properties requested by the user or established by the vault's conventions. See [PROPERTIES.md](references/PROPERTIES.md) for all property types.
 2. **Write content** using standard Markdown for structure, plus Obsidian-specific syntax below.
 3. **Link related notes** using wikilinks (`[[Note]]`) for internal vault connections, or standard Markdown links for external URLs.
 4. **Embed content** from other notes, images, or PDFs using the `![[embed]]` syntax. See [EMBEDS.md](references/EMBEDS.md) for all embed types.
-5. **Add callouts** for highlighted information using `> [!type]` syntax. See [CALLOUTS.md](references/CALLOUTS.md) for all callout types.
+5. **Add callouts** when they improve the note's structure or match its existing style, using `> [!type]` syntax. See [CALLOUTS.md](references/CALLOUTS.md) for all callout types.
 6. **Verify** the note renders correctly in Obsidian's reading view.
 
 > When choosing between wikilinks and Markdown links: use `[[wikilinks]]` for notes within the vault (Obsidian tracks renames automatically) and `[text](url)` for external URLs only.
