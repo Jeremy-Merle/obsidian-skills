@@ -19,14 +19,18 @@ Do NOT proceed with note generation if the prerequisite skill is missing.
 
 1. **Verify** the `obsidian-markdown` skill is available. If not, stop and report the error above.
 2. **Read** the paper content provided by the user (PDF, pasted text, URL, etc.).
-3. **Search Zotero**: 使用 `Zotero-MCP` 的 `search_library` 工具，以论文标题作为查询词在库中搜索。若返回结果中存在 `title` 与论文标题匹配的条目，取其 `key` 字段，将 frontmatter 中的 `{KEY}` 替换为该 key 值（如 `zotero://select/library/items/ABC123`）。若未找到匹配结果，则留空为 `zotero://select/library/items/`。
-4. **Read PDF from Zotero**: 若步骤 3 匹配到条目，使用 `Zotero-MCP` 的 `get_item_details` 或 `get_content` 查找该条目下的附件 PDF。若找到 PDF 附件，读取其内容作为论文正文来源；若未找到 PDF，则回退使用用户提供的论文内容（步骤 2）。
+3. **Search Zotero**: Use the `Zotero-MCP` `search_library` tool to search the library by the paper title. If an item's `title` matches the paper title, take its `key` and replace `{KEY}` in the frontmatter with that key (for example, `zotero://select/library/items/ABC123`). If there is no match, leave the URL as `zotero://select/library/items/`.
+4. **Read the original PDF from Zotero**:
+   - If step 3 finds a matching item, use `get_item_details` to enumerate its child PDF attachments and inspect their attachment titles and filenames. Normalize both values by removing a trailing `.pdf` extension and comparing names case-insensitively.
+   - Exclude every attachment whose normalized title or filename ends with `-compare`; these are translated Chinese-English comparison versions.
+   - Select an attachment whose normalized title or filename is exactly `PDF` or `Full Text PDF`. Call `get_content` with that attachment's `attachmentKey` and use its content as the primary source for the paper's main text.
+   - If no eligible original attachment exists, do not read a `*-compare` PDF. Fall back to the paper content provided by the user in step 2; if the user did not provide usable content, ask them to supply the original paper.
 5. **Determine the short title**:
-   - 若步骤 3 匹配到 Zotero 条目，使用 `get_item_details` 获取该条目详情，检查其 `shortTitle` 字段是否存在且非空。
-     - **存在**: 直接使用该 `shortTitle` 作为输出文件名。
-     - **不存在**: 按下方 Short Title Rules 生成短标题。~~(由于Zotero-MCP暂时没有写入短标题的工具，暂时不写入，后续工具更新可恢复)然后使用 `Zotero-MCP` 将该短标题写入该条目的 `shortTitle` 字段。~~
-   - 若步骤 3 未匹配到条目，则按 Short Title Rules 生成短标题作为输出文件名。
-6. **Generate** the Obsidian note following the output template.
+   - If step 3 finds a matching Zotero item, use `get_item_details` to inspect its `shortTitle` field.
+     - **If present**: Use that `shortTitle` directly as the output filename.
+     - **If absent**: Generate a short title using the Short Title Rules below. ~~(Zotero-MCP currently has no tool for writing a short title, so do not write it back for now; restore this behavior when support is added.)~~
+   - If step 3 finds no matching item, generate a short title using the Short Title Rules below and use it as the output filename.
+6. **Generate** the Obsidian note using the output template, including the `文献阅读: true` property.
 7. **Invoke** the `obsidian-markdown` skill conventions to ensure all syntax (frontmatter, callouts, wikilinks, etc.) is valid Obsidian Flavored Markdown.
 
 ## Short Title Rules
@@ -51,15 +55,19 @@ The generated note MUST follow this exact structure:
 
 ````markdown
 ---
-tags:
-  - paper
 Zotero: zotero://select/library/items/{KEY}
+文献阅读: true
 ---
 
 ## Paper Full Title
 
 > [!abstract] 核心贡献
-> 用 2-4 句话概括论文的核心贡献和创新点。
+> - 简洁列出核心贡献与创新点
+> - 简洁列出其他关键贡献
+
+> [!question] 不足
+> - 简洁列出主要局限性
+> - 简洁列出其他关键不足
 
 ## 论文内容梳理
 
@@ -101,9 +109,9 @@ Zotero: zotero://select/library/items/{KEY}
 
 ## Formatting Rules
 
-- **Frontmatter**: `tags` 至少包含 `paper`，可根据论文领域添加更多标签（如 `NLP`、`CV`、`RL` 等）。`Zotero` 字段通过 `Zotero-MCP` 的 `search_library` 工具自动查找：以论文标题搜索，若匹配到结果则取返回条目的 `key` 字段拼接为 `zotero://select/library/items/{key}`；若未匹配则留空。
+- **Frontmatter**: 每篇生成笔记都必须包含 `文献阅读: true` 属性。`Zotero` 字段通过 `Zotero-MCP` 的 `search_library` 工具自动查找：以论文标题搜索，若匹配到结果则取返回条目的 `key` 字段拼接为 `zotero://select/library/items/{key}`；若未匹配则留空。
 - **二级标题 `##`**: 使用论文完整标题作为第一个二级标题。
-- **Callout**: 使用 `> [!abstract] 核心贡献` 格式，内容精炼概括论文贡献。
+- **Callout（核心贡献与不足）**: 使用 `> [!abstract] 核心贡献` 格式，以简洁的项目列表概括论文贡献与创新点；随后另起一个 `> [!question] 不足` Callout，以简洁的项目列表概括论文的主要局限性。
 - **内容梳理**: 使用三级标题 `###` 划分子章节，层次清晰。
 - **数学公式**: 使用 LaTeX 语法（行内 `$...$`，块级 `$$...$$`）。
 - **内部链接**: 如引用 vault 中已有笔记，使用 `[[wikilink]]` 格式。
